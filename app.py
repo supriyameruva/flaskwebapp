@@ -12,16 +12,18 @@ account_url = "https://myflaskwebappstorage.blob.core.windows.net/"
 sas_token = "sv=2022-11-02&ss=bfqt&srt=sco&sp=rwdlacupiytfx&se=2024-10-17T07:48:24Z&st=2024-10-13T23:48:24Z&spr=https&sig=5QXXaTrWGsVmwyJ9Y%2B8SkY2jQbymPNt%2FCjWqErTOMdY%3D"
 blob_service_client = BlobServiceClient(account_url=account_url, credential=sas_token)
 
+# Set upload folder and allowed file extensions
+app.config['UPLOAD_FOLDER'] = 'uploads/'
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'txt', 'pdf'}
 
+# Ensure upload folder exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Set upload folder and allowed file extensions
-app.config['UPLOAD_FOLDER'] = 'uploads/'
-app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'txt', 'pdf'}
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -51,21 +53,14 @@ def upload():
     if request.method == 'POST':
         file = request.files['file']
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return f"File {filename} uploaded successfully"
-        return 'File not allowed'
-    return render_template('upload.html')
-
-
-@app.route('/upload', methods=['GET', 'POST'])
-def upload():
-    if request.method == 'POST':
-        file = request.files['file']
-        if file and allowed_file(file.filename):
-            # Create a blob client using the container and filename
+             # Upload to Azure Blob Storage
             blob_client = blob_service_client.get_blob_client(container='uploads', blob=file.filename)
             blob_client.upload_blob(file, overwrite=True)  # Use overwrite=True to replace existing blobs
-            return f"File {file.filename} uploaded successfully to Azure Blob Storage"
+            
+            return f"File {filename} uploaded successfully to Azure Blob Storage"
         return 'File not allowed'
     return render_template('upload.html')
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
