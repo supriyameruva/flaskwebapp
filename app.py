@@ -60,13 +60,17 @@ def upload():
     if request.method == 'POST':
         file = request.files['file']
         if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)  # Secure the file name
             print(f"File {file.filename} received for upload")
+            try:
              # Upload to Azure Blob Storage
             blob_client = blob_service_client.get_blob_client(container='uploads', blob=file.filename)
             blob_client.upload_blob(file, overwrite=True)  # Use overwrite=True to replace existing blobs
             print(f"File {file.filename} uploaded successfully to Azure Blob Storage")
-            return f"File {filename} uploaded successfully to Azure Blob Storage"
+            return f"File {file.filename} uploaded successfully to Azure Blob Storage"
             print(f"File upload failed: {file.filename} not allowed")
+            except Exception as e:
+                return f"An error occurred while uploading: {str(e)}"
         return 'File not allowed'
         print("Rendering upload page")
     return render_template('upload.html')
