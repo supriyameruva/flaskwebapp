@@ -1,17 +1,19 @@
-# Use the Python app service base image
-FROM appsvc/python:3.12
+# Use the official Python image from the Docker Hub
+FROM python:3.9-slim
 
-# Set the working directory inside the container
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . .
-
-# Install the required Python packages
+# Copy the requirements file and install dependencies
+COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# Expose port 8000 to the outside world
+# Copy the entire application code to the working directory
+COPY . .
+
+# Expose the port that the app runs on
 EXPOSE 8000
 
-# Command to run the Flask application
-CMD ["python", "app.py"]
+# Command to run the application using Gunicorn
+CMD ["gunicorn", "-b", "0.0.0.0:8000", "app:app"]  # Update "app:app" if your main file is named differently
+
