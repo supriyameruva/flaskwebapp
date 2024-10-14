@@ -18,10 +18,11 @@ app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'txt', 'pdf'}
 
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
+print("Upload folder created or already exists:", app.config['UPLOAD_FOLDER'])
 
 @app.route('/')
 def index():
+    print("Accessing index page")
     return render_template('index.html')
 
 
@@ -30,11 +31,15 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        print(f"Login attempt by user: {username}")
         # Simple authentication (replace with a real user database check)
         if username == 'admin' and password == 'password':
             session['user'] = username
+            print(f"User {username} logged in successfully")
             return redirect(url_for('index'))
+            print(f"Invalid login attempt for user: {username}")
         return 'Invalid credentials'
+        print("Rendering login page")
     return render_template('login.html')
 
 @app.route('/data', methods=['GET', 'POST'])
@@ -42,7 +47,9 @@ def data():
     if request.method == 'POST':
         name = request.form['name']
         email = request.form['email']
+        print(f"Received data - Name: {name}, Email: {email}")
         return f"Name: {name}, Email: {email}"
+        print("Rendering data input page")
     return render_template('data.html')
 
 def allowed_file(filename):
@@ -53,12 +60,15 @@ def upload():
     if request.method == 'POST':
         file = request.files['file']
         if file and allowed_file(file.filename):
+            print(f"File {file.filename} received for upload")
              # Upload to Azure Blob Storage
             blob_client = blob_service_client.get_blob_client(container='uploads', blob=file.filename)
             blob_client.upload_blob(file, overwrite=True)  # Use overwrite=True to replace existing blobs
-            
+            print(f"File {file.filename} uploaded successfully to Azure Blob Storage")
             return f"File {filename} uploaded successfully to Azure Blob Storage"
+            print(f"File upload failed: {file.filename} not allowed")
         return 'File not allowed'
+        print("Rendering upload page")
     return render_template('upload.html')
 
 
