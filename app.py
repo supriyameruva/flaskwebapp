@@ -65,19 +65,34 @@ def upload():
             filename = secure_filename(file.filename)  # Secure the file name
             print(f"File {file.filename} received for upload")
             try:
-                # Upload to Azure Blob Storage
-                blob_client = blob_service_client.get_blob_client(container='uploads', blob=filename)
+                # Define the container name
+                container_name = 'uploads'
+                
+                # Create a container client for the specified container
+                container_client = blob_service_client.get_container_client(container_name)
+                
+                # Check if the container exists by trying to get its properties
+                try:
+                    container_client.get_container_properties()  # This will raise an exception if the container does not exist
+                    print(f"Container '{container_name}' exists.")
+                except Exception as e:  # Catch the exception if the container does not exist
+                    # Create the container if it doesn't exist
+                    container_client.create_container()
+                    print(f"Container '{container_name}' created.")
+
+                # Now that the container exists, upload the blob
+                blob_client = blob_service_client.get_blob_client(container=container_name, blob=filename)
                 blob_client.upload_blob(file, overwrite=True)  # Use overwrite=True to replace existing blobs
                 print(f"File {file.filename} uploaded successfully to Azure Blob Storage")
                 return f"File {file.filename} uploaded successfully to Azure Blob Storage"
             except Exception as e:
-                print(f"An error occurred while uploading: {str(e)}")
+                print(f"An error occurred while uploading: {str(e)}")  # Log any errors during upload
                 return f"An error occurred while uploading: {str(e)}"
         else:
-            print(f"File upload failed: {file.filename} not allowed")
+            print(f"File upload failed: {file.filename} not allowed")  # Log if the file is not allowed
             return 'File not allowed'
     
-    print("Rendering upload page")
+    print("Rendering upload page")  # Log that the upload page is being rendered
     return render_template('upload.html')
 
 if __name__ == '__main__':
